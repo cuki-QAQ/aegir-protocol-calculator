@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="玩家自制的阿戈尔开局吞噬估算工具。支持站位、朝向、层数与整备区模拟；当前为公开测试版，结果须结合实战核对。">
+<title>阿戈尔开局吞噬计算器 · 卫戍协议·规程</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <h1><span class="gem"></span>阿戈尔 · 开局吞噬计算器</h1>
+      <div class="sub">明日方舟「卫戍协议·规程」序列Ⅰ · 非官方公开测试版 v13</div>
+    </div>
+    <div class="meta" id="metaInfo"></div>
+  </header>
+
+  <section class="card toolbar">
+    <div class="field">
+      <label>地图</label>
+      <div class="mapPicker" id="mapPicker">
+        <button type="button" class="mapBtn" id="mapBtn"><span id="mapBtnText">白盒 · 全地面</span><i class="chev"></i></button>
+        <div class="mapMenu" id="mapMenu" hidden></div>
+      </div>
+    </div>
+    <div class="field">
+      <label>休整期阿戈尔层数</label>
+      <div class="numWrap">
+        <button type="button" class="stepBtn" id="layMinus" title="减10">−</button>
+        <input type="number" id="layersInput" min="0" max="999" step="1" value="0">
+        <button type="button" class="stepBtn" id="layPlus" title="加10">+</button>
+      </div>
+    </div>
+    <div class="field">
+      <label title="吞噬前的开局层数；不含吞噬标记提供的参考叠层">预估开局层数（吞噬前）</label>
+      <div class="afterLayers" id="layersPreview">—</div>
+    </div>
+    <div class="field">
+      <label>局外练度</label>
+      <select id="ownSelect">
+        <option value="none">未精英（+0%）</option>
+        <option value="p1">精一（攻防+5%）</option>
+        <option value="p2">精二 Lv1–59（攻+10%/防血+5%）</option>
+        <option value="p2max" selected>精二 Lv60 及以上（攻防血+10%）</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>策略</label>
+      <div class="seg seg3" id="strategySeg">
+        <button type="button" data-v="gladiia" class="on">歌蕾蒂娅·猎人战法</button>
+        <button type="button" data-v="pith">Pith·优等生</button>
+        <button type="button" data-v="other">其他</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>新放置</label>
+      <div class="seg" id="eliteSeg">
+        <button type="button" data-v="normal" class="on">普通</button>
+        <button type="button" data-v="elite">精锐</button>
+      </div>
+    </div>
+
+    <div class="btns">
+      <button type="button" id="runBtn" class="primary">▶ 开始本回合</button>
+      <button type="button" id="clearFieldBtn" title="清除场上干员；不保证全部返回整备区">清空场上</button>
+      <button type="button" id="clearAllBtn" title="清空场上和整备区、层数归零；保留地图、策略及全局练度">清空阵容与层数</button>
+    </div>
+  </section>
+
+  <div class="main">
+    <aside class="side">
+      <section class="card" id="paletteCard">
+        <div class="cardHead"><h2>干员库</h2><span class="hint">可拖到整备区，也可直接拖上棋盘</span></div>
+        <div class="palette" id="palette"></div>
+      </section>
+      <section class="card tips">
+        <div class="cardHead"><h2>操作提示</h2></div>
+        <ol class="tipList">
+          <li>从干员库拖入整备区或棋盘；单击干员卡可看快照中的基准面板与特质资料。场上最多 8 名，整备区最多 6 名。</li>
+          <li>拖入空棋盘格后，拖动中央小菱形到四角，或点击方向箭头，确认朝向后完成部署；Esc 或「取消」可取消。移动已有干员时，取消会恢复原位置。</li>
+          <li>编辑时单击场上干员可改朝向，或使用「装备」「换普通/精锐」。重新拖动未选中的棋子可换位；场上互换须双方都能部署到目标格，且保留各自朝向。</li>
+          <li>拖回整备区可留作后备；红色 ✕、整备区的「移除」和拖到干员库都会删除该实例，不会自动补回。由干员库拖到已占用位置会替换原实例。</li>
+          <li>填写休整期层数，旁边显示本模型的吞噬前开局层数。自动加层须先激活盟约；同名干员分别计入加层，激活人数按不同名字计数，调和合计只加 1。</li>
+          <li>「装备」中可设置持有练度、潜能、模组及额外百分比。地形与队友效果不会自动补齐；防御输入暂不参与结算。刷新或部分交换后，个体设置可能丢失，计算前请检查。</li>
+          <li>点击「开始本回合」后，棋盘进入只读结果视图；单击干员查看细则。点击「重置休整期」恢复计算前的场上与整备区，再修改和重算；不自动推进下一回合。</li>
+          <li>切换地图会清除场上阵容；「清空阵容与层数」保留地图、策略和全局练度。当前为开局简化估算，伤害、傀儡与复起等细节仍需实战验证。</li>
+        </ol>
+      </section>
+    </aside>
+
+    <div class="col">
+      <section class="card mapCard">
+        <div class="cardHead mapHead">
+          <h2 id="mapTitle">白盒</h2>
+          <div class="mapHeadActions">
+            <div class="bondStatus" id="bondStatus"></div>
+            <button type="button" class="ghostBtn" id="previewBtn">🗺 地图参考图</button>
+          </div>
+        </div>
+        <div class="mapNote" id="mapNote"></div>
+        <div class="legend" id="mapLegend"></div>
+        <div class="boardWrap" id="boardWrap">
+          <div class="board" id="board"></div>
+          <div class="deployLayer" id="deployLayer" hidden></div>
+          <div class="unitBar" id="unitBar" hidden></div>
+          <button type="button" class="retreatX" id="retreatBtn" hidden title="撤退（从场上移除，不回整备区）">✕</button>
+          <div class="equipPop" id="equipPop" hidden></div>
+        </div>
+        <div class="benchHead">
+          <h3>整备区（待部署区）</h3>
+          <span class="benchTip">猎人战法从右到左取用 · 最右格为「最先」 · 拖动整备区干员上棋盘</span>
+        </div>
+        <div class="benchRow" id="benchRow"></div>
+        <p class="hint" id="boardHint"></p>
+      </section>
+
+      <section class="card results">
+        <div class="cardHead">
+          <h2>本回合结算</h2>
+          <div class="tabs" id="tabs">
+            <button type="button" data-tab="report" class="on">战报</button>
+            <button type="button" data-tab="detail">细则</button>
+          </div>
+        </div>
+        <div id="resultsBody" class="resultsBody"></div>
+      </section>
+    </div>
+  </div>
+
+  <footer class="foot">
+    <p><b>版本与范围</b>：玩家自制、非官方公开测试工具。适用范围按原包标注为「卫戍协议·规程」序列Ⅰ（act3autochess/V3_1）；数据快照标注日期为 2026-11-15，文案整理于 2026-11-17。仅估算开局吞噬，不模拟完整战斗、最优摆法或全部天赋与技能。</p>
+    <p><b>模型假设</b>：部署顺序采用列优先；有效吞噬标记按顺序直接扣除 5000 生命。傀儡切换、斯卡蒂复起、同名加层及吞噬叠层时机均按本工具的简化规则处理，仍需实战核对。特质资料的展示不代表效果已全部实现；地图装置与特殊地形效果不会自动计算。</p>
+    <p><b>资料与权利</b>：参考 <a href="https://prts.wiki/w/卫戍协议·规程/PRTS盟约记录" target="_blank" rel="noopener noreferrer">PRTS 盟约记录</a>、<a href="https://prts.wiki/w/卫戍协议/帮助" target="_blank" rel="noopener noreferrer">PRTS 帮助</a>及原包内数据快照。PRTS 为社区维基；本工具与游戏官方及资料站无隶属关系。角色、地图等第三方内容的权利归相应权利人；代码许可不包含这些内容的使用授权。</p>
+  </footer>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+<div id="dragGhost" class="dragGhost" hidden></div>
+<div id="hoverPreview" class="hoverPreview" hidden><img alt=""><span class="cap"></span></div>
+
+<div class="modalRoot" id="modalRoot" hidden>
+  <div class="modalMask" id="modalMask"></div>
+  <div class="modal" id="modalBox" role="dialog" aria-modal="true"></div>
+</div>
+
+<script src="data.js"></script>
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
